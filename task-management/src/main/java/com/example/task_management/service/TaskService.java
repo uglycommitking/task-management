@@ -10,7 +10,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class TaskService {
@@ -57,7 +56,6 @@ public class TaskService {
     }
 
     public List<Task> getAllTasks() {
-
+        return tasksMap.values().stream().toList();
     }
 }
-
