@@ -1,51 +1,49 @@
 package com.example.task_management.service;
 
-import com.example.task_management.model.Priority;
+import com.example.task_management.controller.TaskController;
 import com.example.task_management.model.Task;
 import com.example.task_management.model.TaskStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class TaskService {
 
-    private final HashMap<Long, Task> tasksMap = new HashMap<>();
+    //private static final Logger logger = LoggerFactory.getLogger(TaskService.class);
+    private final HashMap<Long, Task> tasksMap;
+    AtomicLong taskId;
 
     public TaskService(){
-        List.of(
-                new Task(
-                        1L,
-                        10L,
-                        10L,
-                        TaskStatus.CREATED,
-                        LocalDateTime.now(),
-                        LocalDateTime.now().plusDays(5),
-                        Priority.LOW
-                ),
-                new Task(
-                        2L,
-                        10L,
-                        10L,
-                        TaskStatus.DONE,
-                        LocalDateTime.now(),
-                        LocalDateTime.now().plusDays(5),
-                        Priority.HIGH
-                ),
-                new Task(
-                        3L,
-                        10L,
-                        10L,
-                        TaskStatus.IN_PROGRESS,
-                        LocalDateTime.now(),
-                        LocalDateTime.now().plusDays(5),
-                        Priority.MEDIUM
-                )
-        ).forEach(r -> tasksMap.put(r.id(), r));
+        tasksMap = new HashMap<>();
+        taskId = new AtomicLong();
+    }
+
+    public Task createTask(Task taskToCreate) {
+        if(taskToCreate.id() != null){
+            throw new IllegalArgumentException("Id should be empty");
+        }
+        if(taskToCreate.status() != null){
+            throw new IllegalArgumentException("Status should be empty");
+        }
+        var newTask = new Task(
+                taskId.incrementAndGet(),
+                taskToCreate.creatorId(),
+                taskToCreate.assignedUserId(),
+                TaskStatus.CREATED,
+                taskToCreate.createDateTime(),
+                taskToCreate.deadlineDate(),
+                taskToCreate.priority()
+        );
+        tasksMap.put(newTask.id(), newTask);
+        return newTask;
     }
 
     public Task findTaskById(Long id) {
