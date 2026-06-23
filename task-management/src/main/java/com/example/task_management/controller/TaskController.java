@@ -70,12 +70,13 @@ public class TaskController {
 
     }
 
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> deleteTaskById(
-//            @PathVariable("id") Long id
-//    ){
-//        return taskService.deleteTaskById(id);
-//    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTaskById(
+            @PathVariable("id") Long id
+    ){
+        taskService.deleteTaskById(id);
+        return ResponseEntity.ok().build();
+    }
 
 
 }

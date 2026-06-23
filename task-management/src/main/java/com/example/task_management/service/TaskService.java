@@ -80,6 +80,9 @@ public class TaskService {
     }
 
     public void deleteTaskById(Long id) {
-
+        if(!tasksMap.containsKey(id)){
+            throw new NoSuchElementException("Task with id = " + id + " not found");
+        }
+        tasksMap.remove(id);
     }
 }
