@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/tasks")
@@ -48,24 +49,32 @@ public class TaskController {
         }catch(IllegalArgumentException e){
             return ResponseEntity.badRequest().build();
         }
+    }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Task> updateTask(
+            @PathVariable("id") Long id,
+            @RequestBody Task taskToUpdate
+    ){
+        try{
+            var updatedTask = taskService.updateTask(id, taskToUpdate);
+            return ResponseEntity.ok(updatedTask);
+
+        }
+        catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        catch(NoSuchElementException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
 
     }
 
-//    @PutMapping("/{id}")
-//    public ResponseEntity<Task> updateTask(
-//            @PathVariable("id") Long id,
-//            @RequestBody Task taskToUpdate
-//    ){
-//        return taskService.updateTask(id, taskToUpdate);
-//    }
-//
 //    @DeleteMapping("/{id}")
 //    public ResponseEntity<Void> deleteTaskById(
 //            @PathVariable("id") Long id
 //    ){
 //        return taskService.deleteTaskById(id);
-//
 //    }
 
 

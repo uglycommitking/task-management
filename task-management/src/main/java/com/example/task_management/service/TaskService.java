@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
@@ -48,12 +49,37 @@ public class TaskService {
 
     public Task findTaskById(Long id) {
         if(!tasksMap.containsKey(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Task with " + id + " not found");
+            throw new NoSuchElementException("Task with id = " + id + " not found");
         }
         return tasksMap.get(id);
     }
 
     public List<Task> getAllTasks() {
         return tasksMap.values().stream().toList();
+    }
+
+    public Task updateTask(Long id, Task taskToUpdate) {
+        if(!tasksMap.containsKey(id)){
+            throw new NoSuchElementException("Task with id = " + id + " not found");
+        }
+        var task = tasksMap.get(id);
+        if(task.status() == TaskStatus.DONE){
+            throw new IllegalStateException("Task with id = " + id + " is DONE and cannot be modified");
+        }
+        var updatedTask = new Task(
+                task.id(),
+                taskToUpdate.creatorId(),
+                taskToUpdate.assignedUserId(),
+                taskToUpdate.status(),
+                taskToUpdate.createDateTime(),
+                taskToUpdate.deadlineDate(),
+                taskToUpdate.priority()
+        );
+        tasksMap.put(task.id(), updatedTask);
+        return updatedTask;
+    }
+
+    public void deleteTaskById(Long id) {
+
     }
 }
