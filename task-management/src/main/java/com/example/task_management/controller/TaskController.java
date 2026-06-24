@@ -32,9 +32,13 @@ public class TaskController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTaskById(@PathVariable Long id){
-        Task task = taskService.findTaskById(id);
-        logger.info("Task received by id : {}", id);
-        return ResponseEntity.ok(task);
+        try {
+            Task task = taskService.findTaskById(id);
+            logger.info("Task received by id : {}", id);
+            return ResponseEntity.ok(task);
+        }catch(NoSuchElementException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
     @PostMapping
@@ -43,6 +47,7 @@ public class TaskController {
     ){
         try{
             var createdTask = taskService.createTask(taskToCreate);
+            logger.info("Task created by id = {}", createdTask.id());
             return ResponseEntity
                     .status(HttpStatus.CREATED)
                     .body(createdTask);
@@ -58,8 +63,8 @@ public class TaskController {
     ){
         try{
             var updatedTask = taskService.updateTask(id, taskToUpdate);
+            logger.info("task updated by id = {}", updatedTask.id());
             return ResponseEntity.ok(updatedTask);
-
         }
         catch (IllegalStateException e){
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
@@ -67,16 +72,18 @@ public class TaskController {
         catch(NoSuchElementException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTaskById(
             @PathVariable("id") Long id
     ){
-        taskService.deleteTaskById(id);
-        return ResponseEntity.ok().build();
+        try{
+            taskService.deleteTaskById(id);
+            logger.info("Task by deleted from database");
+            return ResponseEntity.ok().build();
+        }catch (NoSuchElementException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
-
-
 }
