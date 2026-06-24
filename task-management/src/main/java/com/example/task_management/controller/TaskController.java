@@ -86,4 +86,19 @@ public class TaskController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
+
+    @PatchMapping("/{id}/reopen")
+    public ResponseEntity<Task> reopenTask(
+            @PathVariable("id") Long id)
+    {
+        try{
+            taskService.reopenTask(id);
+            logger.info("Task by id = {} reopend", id);
+            return ResponseEntity.ok().build();
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+    }
 }

@@ -21,12 +21,32 @@ public class TaskService {
         taskId = new AtomicLong();
     }
 
+    public void reopenTask(Long id) {
+        if(!tasksMap.containsKey(id)){
+            throw new NoSuchElementException("Task with id = " + id + " not found");
+        }
+        var taskToUpdate = tasksMap.get(id);
+        if(taskToUpdate.status() != TaskStatus.DONE){
+            throw new IllegalArgumentException("Id must be DONE for this method");
+        }
+        var updatedTask = new Task(
+                taskToUpdate.id(),
+                taskToUpdate.creatorId(),
+                taskToUpdate.assignedUserId(),
+                TaskStatus.IN_PROGRESS,
+                taskToUpdate.createDateTime(),
+                taskToUpdate.deadlineDate(),
+                taskToUpdate.priority()
+        );
+        tasksMap.put(taskToUpdate.id(),updatedTask);
+    }
+
     public Task createTask(Task taskToCreate) {
         if(taskToCreate.id() != null){
-            throw new IllegalArgumentException("Id should be empty");
+            throw new IllegalArgumentException("Id must be empty");
         }
         if(taskToCreate.status() != null){
-            throw new IllegalArgumentException("Status should be empty");
+            throw new IllegalArgumentException("Status must be empty");
         }
         var newTask = new Task(
                 taskId.incrementAndGet(),
