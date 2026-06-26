@@ -94,6 +94,32 @@ public class TaskService {
         taskRepository.delete(taskEntity);
     }
 
+    public Task startTask(Long id) {
+        TaskEntity taskEntity = taskRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
+
+        if(taskEntity.getAssignedUserId() == null){
+            throw new IllegalArgumentException("assignedUserId mustn't be empty");
+        }
+
+        var count = taskRepository.countByAssignedUserIdAndStatus(taskEntity.getAssignedUserId(), TaskStatus.IN_PROGRESS);
+
+        if(count >= 5){
+            throw new IllegalArgumentException("you have a lot of tasks with IN_PROGRESS status");
+        }
+
+        var taskAfterStart = new TaskEntity(
+                taskEntity.getId(),
+                taskEntity.getCreatorId(),
+                taskEntity.getAssignedUserId(),
+                TaskStatus.IN_PROGRESS,
+                taskEntity.getCreateDateTime(),
+                taskEntity.getDeadlineDate(),
+                taskEntity.getPriority()
+        );
+        return entityToDomain(taskRepository.save(taskAfterStart));
+    }
+
     private Task entityToDomain(TaskEntity entity){
         return new Task(
                 entity.getId(),
@@ -105,6 +131,4 @@ public class TaskService {
                 entity.getPriority()
         );
     }
-
-
 }

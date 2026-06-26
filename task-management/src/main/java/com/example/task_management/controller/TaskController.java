@@ -101,4 +101,19 @@ public class TaskController {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
+
+    @PostMapping("/{id}/start")
+    public ResponseEntity<Task> startTask(
+            @PathVariable("id") Long id
+    ){
+        try{
+            var startedTask = taskService.startTask(id);
+            logger.info("Task with id = {} has started", id);
+            return ResponseEntity.status(HttpStatus.OK).body(startedTask);
+        }catch(EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+    }
 }
