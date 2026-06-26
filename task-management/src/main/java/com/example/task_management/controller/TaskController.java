@@ -2,14 +2,14 @@ package com.example.task_management.controller;
 
 import com.example.task_management.model.Task;
 import com.example.task_management.service.TaskService;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-import java.util.NoSuchElementException;
+
 
 @RestController
 @RequestMapping("/tasks")
@@ -36,7 +36,7 @@ public class TaskController {
             Task task = taskService.findTaskById(id);
             logger.info("Task received by id : {}", id);
             return ResponseEntity.ok(task);
-        }catch(NoSuchElementException e){
+        }catch(EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
@@ -69,7 +69,7 @@ public class TaskController {
         catch (IllegalStateException e){
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
-        catch(NoSuchElementException e){
+        catch(EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
@@ -82,7 +82,7 @@ public class TaskController {
             taskService.deleteTaskById(id);
             logger.info("Task by deleted from database");
             return ResponseEntity.ok().build();
-        }catch (NoSuchElementException e){
+        }catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
@@ -92,10 +92,10 @@ public class TaskController {
             @PathVariable("id") Long id)
     {
         try{
-            taskService.reopenTask(id);
+            var reopenedTask = taskService.reopenTask(id);
             logger.info("Task by id = {} reopend", id);
-            return ResponseEntity.ok().build();
-        } catch (NoSuchElementException e) {
+            return ResponseEntity.ok().body(reopenedTask);
+        } catch (EntityNotFoundException  e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();

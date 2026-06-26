@@ -1,44 +1,40 @@
 package com.example.task_management.service;
 
+import com.example.task_management.entity.TaskEntity;
 import com.example.task_management.model.Task;
 import com.example.task_management.model.TaskStatus;
+import com.example.task_management.repository.TaskRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
-
-
-import java.util.HashMap;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.concurrent.atomic.AtomicLong;
+
 
 @Service
 public class TaskService {
 
-    private final HashMap<Long, Task> tasksMap;
-    AtomicLong taskId;
+    private final TaskRepository taskRepository;
 
-    public TaskService(){
-        tasksMap = new HashMap<>();
-        taskId = new AtomicLong();
+    public TaskService(TaskRepository taskRepository){
+        this.taskRepository = taskRepository;
     }
 
-    public void reopenTask(Long id) {
-        if(!tasksMap.containsKey(id)){
-            throw new NoSuchElementException("Task with id = " + id + " not found");
-        }
-        var taskToUpdate = tasksMap.get(id);
-        if(taskToUpdate.status() != TaskStatus.DONE){
+    public Task reopenTask(Long id) {
+        TaskEntity taskEntity = taskRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
+
+        if(taskEntity.getStatus() != TaskStatus.DONE){
             throw new IllegalArgumentException("Id must be DONE for this method");
         }
-        var updatedTask = new Task(
-                taskToUpdate.id(),
-                taskToUpdate.creatorId(),
-                taskToUpdate.assignedUserId(),
+        var updatedTask = new TaskEntity(
+                taskEntity.getId(),
+                taskEntity.getCreatorId(),
+                taskEntity.getAssignedUserId(),
                 TaskStatus.IN_PROGRESS,
-                taskToUpdate.createDateTime(),
-                taskToUpdate.deadlineDate(),
-                taskToUpdate.priority()
+                taskEntity.getCreateDateTime(),
+                taskEntity.getDeadlineDate(),
+                taskEntity.getPriority()
         );
-        tasksMap.put(taskToUpdate.id(),updatedTask);
+        return entityToDomain(taskRepository.save(updatedTask));
     }
 
     public Task createTask(Task taskToCreate) {
@@ -48,8 +44,8 @@ public class TaskService {
         if(taskToCreate.status() != null){
             throw new IllegalArgumentException("Status must be empty");
         }
-        var newTask = new Task(
-                taskId.incrementAndGet(),
+        var taskEntity = new TaskEntity(
+                null,
                 taskToCreate.creatorId(),
                 taskToCreate.assignedUserId(),
                 TaskStatus.CREATED,
@@ -57,31 +53,29 @@ public class TaskService {
                 taskToCreate.deadlineDate(),
                 taskToCreate.priority()
         );
-        tasksMap.put(newTask.id(), newTask);
-        return newTask;
+        return entityToDomain(taskRepository.save(taskEntity));
     }
 
     public Task findTaskById(Long id) {
-        if(!tasksMap.containsKey(id)){
-            throw new NoSuchElementException("Task with id = " + id + " not found");
-        }
-        return tasksMap.get(id);
+        TaskEntity taskEntity = taskRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
+        return entityToDomain(taskEntity);
     }
 
     public List<Task> getAllTasks() {
-        return tasksMap.values().stream().toList();
+        List<TaskEntity> allTasks = taskRepository.findAll();
+        return allTasks.stream().map(task -> entityToDomain(task)).toList();
     }
 
     public Task updateTask(Long id, Task taskToUpdate) {
-        if(!tasksMap.containsKey(id)){
-            throw new NoSuchElementException("Task with id = " + id + " not found");
-        }
-        var task = tasksMap.get(id);
-        if(task.status() == TaskStatus.DONE){
+        TaskEntity taskEntity = taskRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
+
+        if(taskEntity.getStatus() == TaskStatus.DONE){
             throw new IllegalStateException("Task with id = " + id + " is DONE and cannot be modified");
         }
-        var updatedTask = new Task(
-                task.id(),
+        TaskEntity taskToSave = new TaskEntity(
+                taskEntity.getId(),
                 taskToUpdate.creatorId(),
                 taskToUpdate.assignedUserId(),
                 taskToUpdate.status(),
@@ -89,15 +83,27 @@ public class TaskService {
                 taskToUpdate.deadlineDate(),
                 taskToUpdate.priority()
         );
-        tasksMap.put(task.id(), updatedTask);
-        return updatedTask;
+        var task = taskRepository.save(taskToSave);
+        return entityToDomain(task);
+
     }
 
     public void deleteTaskById(Long id) {
-        if(!tasksMap.containsKey(id)){
-            throw new NoSuchElementException("Task with id = " + id + " not found");
-        }
-        tasksMap.remove(id);
+        TaskEntity taskEntity = taskRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
+        taskRepository.delete(taskEntity);
+    }
+
+    private Task entityToDomain(TaskEntity entity){
+        return new Task(
+                entity.getId(),
+                entity.getCreatorId(),
+                entity.getAssignedUserId(),
+                entity.getStatus(),
+                entity.getCreateDateTime(),
+                entity.getDeadlineDate(),
+                entity.getPriority()
+        );
     }
 
 
