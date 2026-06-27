@@ -32,18 +32,21 @@ public class TaskService {
                 TaskStatus.IN_PROGRESS,
                 taskEntity.getCreateDateTime(),
                 taskEntity.getDeadlineDate(),
-                taskEntity.getPriority()
+                taskEntity.getPriority(),
+                taskEntity.getDoneDateTime()
         );
         return entityToDomain(taskRepository.save(updatedTask));
     }
 
     public Task createTask(Task taskToCreate) {
-        if(taskToCreate.id() != null){
-            throw new IllegalArgumentException("Id must be empty");
-        }
         if(taskToCreate.status() != null){
             throw new IllegalArgumentException("Status must be empty");
         }
+
+        if(!taskToCreate.deadlineDate().isAfter(taskToCreate.createDateTime())){
+            throw new IllegalArgumentException("Start date must be 1 day earlier than end date");
+        }
+
         var taskEntity = new TaskEntity(
                 null,
                 taskToCreate.creatorId(),
@@ -51,7 +54,8 @@ public class TaskService {
                 TaskStatus.CREATED,
                 taskToCreate.createDateTime(),
                 taskToCreate.deadlineDate(),
-                taskToCreate.priority()
+                taskToCreate.priority(),
+                taskToCreate.doneDateTime()
         );
         return entityToDomain(taskRepository.save(taskEntity));
     }
@@ -74,6 +78,11 @@ public class TaskService {
         if(taskEntity.getStatus() == TaskStatus.DONE){
             throw new IllegalStateException("Task with id = " + id + " is DONE and cannot be modified");
         }
+
+        if(!taskToUpdate.deadlineDate().isAfter(taskToUpdate.createDateTime())){
+            throw new IllegalArgumentException("Start date must be 1 day earlier than end date");
+        }
+
         TaskEntity taskToSave = new TaskEntity(
                 taskEntity.getId(),
                 taskToUpdate.creatorId(),
@@ -81,11 +90,11 @@ public class TaskService {
                 taskToUpdate.status(),
                 taskToUpdate.createDateTime(),
                 taskToUpdate.deadlineDate(),
-                taskToUpdate.priority()
+                taskToUpdate.priority(),
+                taskToUpdate.doneDateTime()
         );
         var task = taskRepository.save(taskToSave);
         return entityToDomain(task);
-
     }
 
     public void deleteTaskById(Long id) {
@@ -97,10 +106,6 @@ public class TaskService {
     public Task startTask(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
-
-        if(taskEntity.getAssignedUserId() == null){
-            throw new IllegalArgumentException("assignedUserId mustn't be empty");
-        }
 
         var count = taskRepository.countByAssignedUserIdAndStatus(taskEntity.getAssignedUserId(), TaskStatus.IN_PROGRESS);
 
@@ -115,7 +120,8 @@ public class TaskService {
                 TaskStatus.IN_PROGRESS,
                 taskEntity.getCreateDateTime(),
                 taskEntity.getDeadlineDate(),
-                taskEntity.getPriority()
+                taskEntity.getPriority(),
+                taskEntity.getDoneDateTime()
         );
         return entityToDomain(taskRepository.save(taskAfterStart));
     }
@@ -128,7 +134,12 @@ public class TaskService {
                 entity.getStatus(),
                 entity.getCreateDateTime(),
                 entity.getDeadlineDate(),
-                entity.getPriority()
+                entity.getPriority(),
+                entity.getDoneDateTime()
         );
+    }
+
+    public Task completeTask(Long id) {
+
     }
 }

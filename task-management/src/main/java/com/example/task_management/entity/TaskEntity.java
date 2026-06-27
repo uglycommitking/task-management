@@ -10,35 +10,38 @@ import java.time.LocalDateTime;
 @Entity
 public class TaskEntity {
 
-    @Column(name = "id")
+    @Column(name = "id", nullable = true)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "creator_id")
+    @Column(name = "creator_id", nullable = false)
     private Long creatorId;
 
-    @Column(name = "assigned_user_id")
+    @Column(name = "assigned_user_id", nullable = false)
     private Long assignedUserId;
 
-    @Column(name = "status")
+    @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private TaskStatus status;
 
-    @Column(name = "create_date_time")
+    @Column(name = "create_date_time", nullable = false)
     private LocalDateTime createDateTime;
 
-    @Column(name = "deadline_date")
+    @Column(name = "deadline_date", nullable = false)
     private LocalDateTime deadlineDate;
 
-    @Column(name = "priority")
+    @Column(name = "priority", nullable = false)
     @Enumerated(EnumType.STRING)
     private Priority priority;
+
+    @Column(name = "done_date_time")
+    private LocalDateTime doneDateTime;
 
     public TaskEntity() {
     }
 
-    public TaskEntity(Long id, Long creatorId, Long assignedUserId, TaskStatus status, LocalDateTime createDateTime, LocalDateTime deadlineDate, Priority priority) {
+    public TaskEntity(Long id, Long creatorId, Long assignedUserId, TaskStatus status, LocalDateTime createDateTime, LocalDateTime deadlineDate, Priority priority, LocalDateTime doneDateTime) {
         this.id = id;
         this.creatorId = creatorId;
         this.assignedUserId = assignedUserId;
@@ -46,6 +49,12 @@ public class TaskEntity {
         this.createDateTime = createDateTime;
         this.deadlineDate = deadlineDate;
         this.priority = priority;
+        this.doneDateTime = doneDateTime;
+    }
+
+
+    public LocalDateTime getDoneDateTime() {
+        return doneDateTime;
     }
 
     public Long getCreatorId() {
@@ -102,5 +111,9 @@ public class TaskEntity {
 
     public void setPriority(Priority priority) {
         this.priority = priority;
+    }
+
+    public void setDoneDateTime(LocalDateTime doneDateTime) {
+        this.doneDateTime = doneDateTime;
     }
 }
