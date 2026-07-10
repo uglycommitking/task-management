@@ -6,6 +6,8 @@ import com.example.task_management.model.TaskStatus;
 import com.example.task_management.repository.TaskRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -23,7 +25,7 @@ public class TaskService {
                 .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
 
         if(taskEntity.getStatus() != TaskStatus.DONE){
-            throw new IllegalArgumentException("Id must be DONE for this method");
+            throw new IllegalArgumentException("Task with id = " + id + " must be DONE to reopen");
         }
         var updatedTask = new TaskEntity(
                 taskEntity.getId(),
@@ -33,7 +35,7 @@ public class TaskService {
                 taskEntity.getCreateDateTime(),
                 taskEntity.getDeadlineDate(),
                 taskEntity.getPriority(),
-                taskEntity.getDoneDateTime()
+                null
         );
         return entityToDomain(taskRepository.save(updatedTask));
     }
@@ -43,7 +45,8 @@ public class TaskService {
             throw new IllegalArgumentException("Status must be empty");
         }
 
-        if(!taskToCreate.deadlineDate().isAfter(taskToCreate.createDateTime())){
+        var nowTime = LocalDateTime.now();
+        if(!taskToCreate.deadlineDate().isAfter(nowTime)){
             throw new IllegalArgumentException("Start date must be 1 day earlier than end date");
         }
 
@@ -51,8 +54,8 @@ public class TaskService {
                 null,
                 taskToCreate.creatorId(),
                 taskToCreate.assignedUserId(),
-                TaskStatus.CREATED,
-                taskToCreate.createDateTime(),
+                TaskStatus.IN_PROGRESS,
+                nowTime,
                 taskToCreate.deadlineDate(),
                 taskToCreate.priority(),
                 taskToCreate.doneDateTime()
@@ -79,7 +82,7 @@ public class TaskService {
             throw new IllegalStateException("Task with id = " + id + " is DONE and cannot be modified");
         }
 
-        if(!taskToUpdate.deadlineDate().isAfter(taskToUpdate.createDateTime())){
+        if(!taskToUpdate.deadlineDate().isAfter(taskEntity.getCreateDateTime())){
             throw new IllegalArgumentException("Start date must be 1 day earlier than end date");
         }
 
@@ -88,7 +91,7 @@ public class TaskService {
                 taskToUpdate.creatorId(),
                 taskToUpdate.assignedUserId(),
                 taskToUpdate.status(),
-                taskToUpdate.createDateTime(),
+                taskEntity.getCreateDateTime(),
                 taskToUpdate.deadlineDate(),
                 taskToUpdate.priority(),
                 taskToUpdate.doneDateTime()
@@ -126,6 +129,28 @@ public class TaskService {
         return entityToDomain(taskRepository.save(taskAfterStart));
     }
 
+    public Task completeTask(Long id) {
+        TaskEntity taskEntity = taskRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
+
+        if (taskEntity.getStatus() != TaskStatus.IN_PROGRESS) {
+            throw new IllegalStateException("Task with id = " + id + " must be IN_PROGRESS to complete");
+        }
+
+        TaskEntity taskToSave = new TaskEntity(
+                taskEntity.getId(),
+                taskEntity.getCreatorId(),
+                taskEntity.getAssignedUserId(),
+                TaskStatus.DONE,
+                taskEntity.getCreateDateTime(),
+                taskEntity.getDeadlineDate(),
+                taskEntity.getPriority(),
+                LocalDateTime.now()
+        );
+        var task = taskRepository.save(taskToSave);
+        return entityToDomain(task);
+    }
+
     private Task entityToDomain(TaskEntity entity){
         return new Task(
                 entity.getId(),
@@ -137,9 +162,5 @@ public class TaskService {
                 entity.getPriority(),
                 entity.getDoneDateTime()
         );
-    }
-
-    public Task completeTask(Long id) {
-
     }
 }

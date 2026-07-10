@@ -2,7 +2,6 @@ package com.example.task_management.controller;
 
 import com.example.task_management.model.Task;
 import com.example.task_management.service.TaskService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,7 +86,7 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.OK).body(startedTask);
     }
 
-    @PostMapping("/tasks/{id}/complete")
+    @PostMapping("/{id}/complete")
     public ResponseEntity<Task> completeTask(
             @PathVariable("id") Long id
     ){

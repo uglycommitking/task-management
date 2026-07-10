@@ -18,8 +18,7 @@ public record Task(
 
         TaskStatus status,
 
-        @FutureOrPresent
-        @NotNull
+        @Null
         LocalDateTime createDateTime,
 
         @FutureOrPresent
