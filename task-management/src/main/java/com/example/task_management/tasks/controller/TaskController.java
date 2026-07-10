@@ -1,7 +1,7 @@
-package com.example.task_management.controller;
+package com.example.task_management.tasks.controller;
 
-import com.example.task_management.model.Task;
-import com.example.task_management.service.TaskService;
+import com.example.task_management.tasks.model.Task;
+import com.example.task_management.tasks.service.TaskService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

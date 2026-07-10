@@ -1,4 +1,4 @@
-package com.example.task_management.model;
+package com.example.task_management.tasks.model;
 
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;

@@ -1,9 +1,9 @@
-package com.example.task_management.service;
+package com.example.task_management.tasks.service;
 
-import com.example.task_management.entity.TaskEntity;
-import com.example.task_management.model.Task;
-import com.example.task_management.model.TaskStatus;
-import com.example.task_management.repository.TaskRepository;
+import com.example.task_management.tasks.repository.TaskEntity;
+import com.example.task_management.tasks.model.Task;
+import com.example.task_management.tasks.model.TaskStatus;
+import com.example.task_management.tasks.repository.TaskRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 

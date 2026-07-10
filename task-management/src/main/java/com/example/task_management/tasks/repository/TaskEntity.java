@@ -1,7 +1,7 @@
-package com.example.task_management.entity;
+package com.example.task_management.tasks.repository;
 
-import com.example.task_management.model.Priority;
-import com.example.task_management.model.TaskStatus;
+import com.example.task_management.tasks.model.Priority;
+import com.example.task_management.tasks.model.TaskStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 @Entity
 public class TaskEntity {
 
-    @Column(name = "id", nullable = true)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

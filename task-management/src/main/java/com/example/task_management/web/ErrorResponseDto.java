@@ -1,4 +1,4 @@
-package com.example.task_management.dto;
+package com.example.task_management.web;
 
 import java.time.LocalDateTime;
 
