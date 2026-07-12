@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
@@ -82,6 +84,27 @@ public class TaskServiceTest {
 
         assertThrows(IllegalArgumentException.class,
                 ()-> taskService.reopenTask(id));
+    }
+
+    @Test
+    void shouldReturnTaskAfterReopen(){
+
+        long id = 1;
+        TaskEntity taskEntity = new TaskEntity();
+        taskEntity.setId(id);
+        taskEntity.setStatus(TaskStatus.DONE);
+
+        Task task = new Task(id,null,null,TaskStatus.DONE,
+                null,null,null,null);
+
+        when(taskRepository.findById(id)).thenReturn(Optional.of(taskEntity));
+        when(mapper.toDomain(taskEntity)).thenReturn(task);
+        when(taskRepository.save(taskEntity)).thenReturn(taskEntity);
+
+        Task reopenedTask = taskService.reopenTask(id);
+
+        assertEquals(task, reopenedTask);
+
     }
 
 }
