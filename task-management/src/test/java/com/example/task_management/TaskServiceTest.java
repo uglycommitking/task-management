@@ -6,6 +6,7 @@ import com.example.task_management.tasks.model.TaskStatus;
 import com.example.task_management.tasks.repository.TaskEntity;
 import com.example.task_management.tasks.repository.TaskRepository;
 import com.example.task_management.tasks.service.TaskService;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,8 +14,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.Mockito.when;
 
@@ -55,15 +56,19 @@ public class TaskServiceTest {
 
         List<Task> allTasks = taskService.getAllTasks();
 
-        assertEquals(1, allTasks.size());
-        assertEquals(1L, allTasks.get(0).id());
-        assertEquals(TaskStatus.CREATED, allTasks.get(0).status());
-
         assertAll(
                 () -> assertEquals(1, allTasks.size(), "Количество задач в списке не совпадает"),
                 () -> assertEquals(1L, allTasks.get(0).id(), "ID первой задачи не совпадает"),
                 () -> assertEquals(TaskStatus.CREATED, allTasks.get(0).status(), "Статус первой задачи не совпадает")
         );
+    }
+
+    @Test
+    void shouldReturnEntityNotFoundWhenReopenTask(){
+        long id = 1;
+        when(taskRepository.findById(id)).thenReturn(Optional.empty());
+        assertThrows(EntityNotFoundException.class,
+                () -> taskService.reopenTask(id));
     }
 
 
