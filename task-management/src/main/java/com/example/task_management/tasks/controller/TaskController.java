@@ -35,7 +35,6 @@ public class TaskController {
         Task task = taskService.findTaskById(id);
         logger.info("Task received by id : {}", id);
         return ResponseEntity.ok(task);
-
     }
 
     @PostMapping
