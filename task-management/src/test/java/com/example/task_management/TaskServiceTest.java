@@ -148,4 +148,41 @@ public class TaskServiceTest {
 
     }
 
+    @Test
+    void findTaskById_whenTaskNotFound_throwsEntityNotFound(){
+
+        when(taskRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(EntityNotFoundException.class,()-> taskService.findTaskById(1L));
+    }
+
+    @Test
+    void findTaskById_whenTaskFound_returnsTask(){
+        long id = 1;
+
+        TaskEntity entity = new TaskEntity();
+        entity.setId(id);
+        entity.setStatus(TaskStatus.IN_PROGRESS);
+
+        Task task = new Task(id, null,null,TaskStatus.IN_PROGRESS,
+                null,null,null,null);
+
+        when(taskRepository.findById(id)).thenReturn(Optional.of(entity));
+        when(mapper.toDomain(entity)).thenReturn(task);
+
+        assertEquals(task, taskService.findTaskById(id));
+    }
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
