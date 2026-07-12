@@ -64,12 +64,24 @@ public class TaskServiceTest {
     }
 
     @Test
-    void shouldReturnEntityNotFoundWhenReopenTask(){
+    void shouldReturnEntityNotFoundWhenReopenTaskNotFound(){
         long id = 1;
         when(taskRepository.findById(id)).thenReturn(Optional.empty());
         assertThrows(EntityNotFoundException.class,
                 () -> taskService.reopenTask(id));
     }
 
+    @Test
+    void shouldReturnIllegalArgumentWhenStatusNotDone(){
+        long id = 1;
+        TaskEntity entity = new TaskEntity();
+        entity.setId(id);
+        entity.setStatus(TaskStatus.IN_PROGRESS);
+
+        when(taskRepository.findById(id)).thenReturn(Optional.of(entity));
+
+        assertThrows(IllegalArgumentException.class,
+                ()-> taskService.reopenTask(id));
+    }
 
 }
