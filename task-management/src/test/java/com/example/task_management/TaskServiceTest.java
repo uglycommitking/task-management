@@ -32,7 +32,7 @@ public class TaskServiceTest {
     private TaskService taskService;
 
     @Test
-    void shouldReturnEmptyListWhenNoTasksExist(){
+    void getAllTasks_whenNoTasks_returnsEmptyList(){
 
         when(taskRepository.findAll()).thenReturn(List.of());
 
@@ -43,7 +43,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void shouldReturnNotEmptyListWhenTasksExist(){
+    void getAllTasks_whenTasksExist_returnsMappedTasks(){
 
         TaskEntity entity = new TaskEntity();
         entity.setId(1L);
@@ -66,7 +66,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void shouldReturnEntityNotFoundWhenReopenTaskNotFound(){
+    void reopenTask_whenTaskNotFound_throwsEntityNotFound(){
         long id = 1;
         when(taskRepository.findById(id)).thenReturn(Optional.empty());
         assertThrows(EntityNotFoundException.class,
@@ -74,7 +74,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void shouldReturnIllegalArgumentWhenStatusNotDone(){
+    void reopenTask_whenStatusNotDone_throwsIllegalArgument(){
         long id = 1;
         TaskEntity entity = new TaskEntity();
         entity.setId(id);
@@ -87,7 +87,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void shouldReturnTaskAfterReopen(){
+    void reopenTask_whenStatusDone_setsStatusToCreated(){
 
         long id = 1;
         TaskEntity taskEntity = new TaskEntity();
@@ -105,6 +105,14 @@ public class TaskServiceTest {
 
         assertEquals(task, reopenedTask);
 
+    }
+
+    @Test
+    void createTask_whenStatusNotEmpty_throwsIllegalArgument(){
+        Task taskToCreate = new Task(1L, null,null,TaskStatus.CREATED,
+                null,null,null,null);
+
+        assertThrows(IllegalArgumentException.class, () -> taskService.createTask(taskToCreate));
     }
 
 }
