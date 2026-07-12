@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -111,6 +112,14 @@ public class TaskServiceTest {
     void createTask_whenStatusNotEmpty_throwsIllegalArgument(){
         Task taskToCreate = new Task(1L, null,null,TaskStatus.CREATED,
                 null,null,null,null);
+
+        assertThrows(IllegalArgumentException.class, () -> taskService.createTask(taskToCreate));
+    }
+
+    @Test
+    void createTask_whenDeadLineIsAfter_throwsIllegalArgument(){
+        Task taskToCreate = new Task(1L, null,null,null,
+                null, LocalDateTime.now(),null,null);
 
         assertThrows(IllegalArgumentException.class, () -> taskService.createTask(taskToCreate));
     }
