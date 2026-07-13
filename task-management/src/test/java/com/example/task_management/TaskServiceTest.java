@@ -1,6 +1,7 @@
 package com.example.task_management;
 
 import com.example.task_management.tasks.mapper.TaskMapper;
+import com.example.task_management.tasks.model.Priority;
 import com.example.task_management.tasks.model.Task;
 import com.example.task_management.tasks.model.TaskStatus;
 import com.example.task_management.tasks.repository.TaskEntity;
@@ -214,11 +215,29 @@ public class TaskServiceTest {
 
     @Test
     void updateTask_whenValidRequest_updatesFieldsAndReturnsTask(){
+        long id = 1;
+        LocalDateTime createDate = LocalDateTime.now();
 
+        Task taskToUpdate = new Task(null, 2L, 3L, TaskStatus.IN_PROGRESS,
+                null, createDate.plusDays(2), Priority.HIGH, null);
+
+        TaskEntity taskEntity = new TaskEntity(1L, 5L, 7L, TaskStatus.IN_PROGRESS,
+                createDate, createDate.plusDays(1), Priority.LOW, null);
+
+        when(taskRepository.findById(id)).thenReturn(Optional.of(taskEntity));
+        when(taskRepository.save(taskEntity)).thenReturn(taskEntity);
+        when(mapper.toDomain(taskEntity)).thenReturn(taskToUpdate);
+
+        Task result = taskService.updateTask(id, taskToUpdate);
+
+        assertAll(
+                () -> assertEquals(taskToUpdate, result),
+                () -> assertEquals(taskToUpdate.creatorId(), taskEntity.getCreatorId()),
+                () -> assertEquals(taskToUpdate.assignedUserId(), taskEntity.getAssignedUserId()),
+                () -> assertEquals(taskToUpdate.deadlineDate(), taskEntity.getDeadlineDate()),
+                () -> assertEquals(taskToUpdate.priority(), taskEntity.getPriority())
+        );
     }
-
-
-
 }
 
 
