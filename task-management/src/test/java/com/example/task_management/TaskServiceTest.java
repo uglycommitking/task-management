@@ -172,6 +172,18 @@ public class TaskServiceTest {
         assertEquals(task, taskService.findTaskById(id));
     }
 
+    @Test
+    void updateTask_whenTaskNotFound_throwsEntityNotFound(){
+        long id = 1;
+        Task taskToUpdate = new Task(null, 2L,null,null,
+                null,null,null,null);
+
+        when(taskRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> taskService.updateTask(id,taskToUpdate));
+
+    }
+
 }
 
 
