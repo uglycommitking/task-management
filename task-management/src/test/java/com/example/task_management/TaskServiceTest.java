@@ -104,7 +104,10 @@ public class TaskServiceTest {
 
         Task reopenedTask = taskService.reopenTask(id);
 
-        assertEquals(task, reopenedTask);
+        assertAll(
+                ()->assertEquals(task, reopenedTask),
+                ()->assertEquals(TaskStatus.IN_PROGRESS, taskEntity.getStatus())
+        );
 
     }
 
@@ -263,7 +266,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void startTask_whenCountOfTasksMoreThenFive_throwsIllegalArgument(){
+    void startTask_whenCountOfTasksMoreThanFive_throwsIllegalArgument(){
         long id = 1;
         TaskEntity taskEntity = new TaskEntity();
         taskEntity.setId(id);
@@ -271,7 +274,7 @@ public class TaskServiceTest {
 
         when(taskRepository.findById(id)).thenReturn(Optional.of(taskEntity));
         when(taskRepository.countByAssignedUserIdAndStatus(
-                taskEntity.getAssignedUserId(), TaskStatus.IN_PROGRESS)).thenReturn(6);
+                taskEntity.getAssignedUserId(), TaskStatus.IN_PROGRESS)).thenReturn(5);
 
         assertThrows(IllegalArgumentException.class, ()->taskService.startTask(id));
     }
@@ -301,7 +304,46 @@ public class TaskServiceTest {
         );
     }
 
+    @Test
+    void completeTask_whenTaskNotFound_throwsEntityNotFound(){
+        when(taskRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(EntityNotFoundException.class, ()->taskService.completeTask(1L));
+    }
 
+    @Test
+    void completeTask_whenStatusInProgress_throwsIllegalState(){
+        long id = 1;
+        TaskEntity taskEntity = new TaskEntity();
+        taskEntity.setId(id);
+        taskEntity.setStatus(TaskStatus.CREATED);
+        when(taskRepository.findById(id)).thenReturn(Optional.of(taskEntity));
+
+        assertThrows(IllegalStateException.class, ()->taskService.completeTask(id));
+    }
+
+    @Test
+    void completeTask_whenValidRequest_setStatusAndDoneDateTime(){
+        long id = 1;
+        TaskEntity taskEntity = new TaskEntity();
+        taskEntity.setId(id);
+        taskEntity.setStatus(TaskStatus.IN_PROGRESS);
+
+        Task taskEntityDomain = new Task(id,null,null,TaskStatus.DONE,
+                null,null,null,null);
+
+        when(taskRepository.findById(id)).thenReturn(Optional.of(taskEntity));
+        when(taskRepository.save(taskEntity)).thenReturn(taskEntity);
+        when(mapper.toDomain(taskEntity)).thenReturn(taskEntityDomain);
+
+        Task result = taskService.completeTask(id);
+
+        assertAll(
+                ()->assertEquals(taskEntityDomain,result),
+                ()->assertEquals(TaskStatus.DONE,taskEntity.getStatus()),
+                ()->assertNotNull(taskEntity.getDoneDateTime())
+        );
+
+    }
 
 }
 
