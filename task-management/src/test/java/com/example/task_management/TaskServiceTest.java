@@ -13,14 +13,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -238,6 +237,26 @@ public class TaskServiceTest {
                 () -> assertEquals(taskToUpdate.priority(), taskEntity.getPriority())
         );
     }
+
+    @Test
+    void deleteTaskById_whenTaskNotFound_throwsEntityNotFound(){
+        when(taskRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(EntityNotFoundException.class, ()->taskService.deleteTaskById(1L));
+    }
+
+    @Test
+    void deleteTaskById_whenTaskExists_deletesTask(){
+        long id = 1;
+        TaskEntity taskEntity = new TaskEntity();
+        taskEntity.setId(id);
+        when(taskRepository.findById(id)).thenReturn(Optional.of(taskEntity));
+
+        taskService.deleteTaskById(id);
+
+        verify(taskRepository).delete(taskEntity);
+    }
+
+
 }
 
 
