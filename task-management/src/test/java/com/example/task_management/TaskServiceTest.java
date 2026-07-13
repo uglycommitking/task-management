@@ -256,6 +256,52 @@ public class TaskServiceTest {
         verify(taskRepository).delete(taskEntity);
     }
 
+    @Test
+    void startTask_whenTaskNotFound_throwsEntityNotFound(){
+        when(taskRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(EntityNotFoundException.class, ()->taskService.startTask(1L));
+    }
+
+    @Test
+    void startTask_whenCountOfTasksMoreThenFive_throwsIllegalArgument(){
+        long id = 1;
+        TaskEntity taskEntity = new TaskEntity();
+        taskEntity.setId(id);
+        taskEntity.setAssignedUserId(id);
+
+        when(taskRepository.findById(id)).thenReturn(Optional.of(taskEntity));
+        when(taskRepository.countByAssignedUserIdAndStatus(
+                taskEntity.getAssignedUserId(), TaskStatus.IN_PROGRESS)).thenReturn(6);
+
+        assertThrows(IllegalArgumentException.class, ()->taskService.startTask(id));
+    }
+
+    @Test
+    void startTask_whenValidRequest_updatesStatusAndReturnsTask(){
+        long id = 1;
+        TaskEntity taskEntity = new TaskEntity();
+        taskEntity.setId(id);
+        taskEntity.setAssignedUserId(id);
+        taskEntity.setStatus(TaskStatus.CREATED);
+
+        Task taskEntityDomain = new Task(id,null,id,TaskStatus.IN_PROGRESS,
+                null,null,null,null);
+
+        when(taskRepository.findById(id)).thenReturn(Optional.of(taskEntity));
+        when(taskRepository.countByAssignedUserIdAndStatus(
+                taskEntity.getAssignedUserId(), TaskStatus.IN_PROGRESS)).thenReturn(3);
+        when(mapper.toDomain(taskEntity)).thenReturn(taskEntityDomain);
+        when(taskRepository.save(taskEntity)).thenReturn(taskEntity);
+
+        Task result = taskService.startTask(id);
+
+        assertAll(
+                () -> assertEquals(taskEntityDomain, result),
+                ()-> assertEquals(TaskStatus.IN_PROGRESS, taskEntity.getStatus())
+        );
+    }
+
+
 
 }
 
