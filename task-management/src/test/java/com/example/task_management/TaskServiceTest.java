@@ -184,6 +184,41 @@ public class TaskServiceTest {
 
     }
 
+    @Test
+    void updateTask_whenStatusDone_throwsIllegalState(){
+        long id = 1;
+
+        Task taskToUpdate = new Task(null, 2L,null,null,
+                null,null,null,null);
+
+        TaskEntity entity = new TaskEntity(1L, 1L, 2L,TaskStatus.DONE,
+                null,null,null,null);
+        when(taskRepository.findById(id)).thenReturn(Optional.of(entity));
+
+        assertThrows(IllegalStateException.class, () -> taskService.updateTask(id, taskToUpdate));
+    }
+
+    @Test
+    void updateTask_whenDeadlineNotAfterCreateDate_throwsIllegalArgument(){
+
+        LocalDateTime createDate = LocalDateTime.now();
+        Task taskToUpdate = new Task(null, 2L,null,TaskStatus.IN_PROGRESS,
+                null,createDate.minusDays(1),null,null);
+        TaskEntity taskEntity = new TaskEntity(null, 2L,null,TaskStatus.IN_PROGRESS,
+                createDate,null,null,null);
+
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(taskEntity));
+
+        assertThrows(IllegalArgumentException.class, () -> taskService.updateTask(1L, taskToUpdate));
+    }
+
+    @Test
+    void updateTask_whenValidRequest_updatesFieldsAndReturnsTask(){
+
+    }
+
+
+
 }
 
 
