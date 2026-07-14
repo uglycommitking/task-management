@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
-    ResponseEntity<ErrorResponseDto> handlerGenericException(Exception e){
+    ResponseEntity<ErrorResponseDto> handleGenericException(Exception e){
 
         var responseDto = new ErrorResponseDto(
           "Internal server error",
@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
-    ResponseEntity<ErrorResponseDto> handlerEntityNotFoundException(EntityNotFoundException e){
+    ResponseEntity<ErrorResponseDto> handleEntityNotFoundException(EntityNotFoundException e){
         var responseDto = new ErrorResponseDto(
                 "Not found",
                 e.getMessage(),
@@ -35,10 +35,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(exception = {
             IllegalArgumentException.class,
-            IllegalStateException.class,
             MethodArgumentNotValidException.class
     })
-    ResponseEntity<ErrorResponseDto> handlerBadRequest(Exception e){
+    ResponseEntity<ErrorResponseDto> handleBadRequest(Exception e){
 
         var responseDto = new ErrorResponseDto(
                 "Bad request",
@@ -46,5 +45,15 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseDto);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    ResponseEntity<ErrorResponseDto> handleIllegalStateException(IllegalStateException e){
+        var responseDto = new ErrorResponseDto(
+                "Conflict",
+                e.getMessage(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(responseDto);
     }
 }
