@@ -204,6 +204,23 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.message").value("Bad request"));
     }
 
+    @Test
+    void deleteTaskById_WhenTaskExist_returnsOk()throws Exception{
+        mockMvc.perform(delete("/tasks/1"))
+                .andExpect(status().isOk());
+        verify(taskService).deleteTaskById(1L);
+    }
+
+    @Test
+    void deleteTaskById_whenTaskNotExists_returnsNotFound() throws Exception{
+        doThrow(new EntityNotFoundException("Not found task by id = 1")).when(taskService).deleteTaskById(1L);
+
+        mockMvc.perform(delete("/tasks/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Not found"))
+                .andExpect(jsonPath("$.detailedMessage").value("Not found task by id = 1"));
+    }
+
 
 
 
