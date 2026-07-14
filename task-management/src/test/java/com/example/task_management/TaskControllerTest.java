@@ -250,6 +250,66 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.detailedMessage").value("Task with id = " + id + " must be DONE to reopen"));
     }
 
+    @Test
+    void startTask_whenTaskExist_returnsTask() throws Exception{
+        long id = 1;
+        Task task = createTask(id);
+        when(taskService.startTask(id)).thenReturn(task);
+        mockMvc.perform(post("/tasks/{id}/start",id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.creatorId").value(10));
+    }
+
+    @Test
+    void startTask_whenTaskNotExist_returnsNotFound() throws Exception{
+        long id = 1;
+        when(taskService.startTask(id)).thenThrow(new EntityNotFoundException("Not found task by id = " + id));
+        mockMvc.perform(post("/tasks/{id}/start",id))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Not found"))
+                .andExpect(jsonPath("$.detailedMessage").value("Not found task by id = " + id));
+    }
+
+    @Test
+    void startTask_whenCountOfTasksMoreThanFive_returnsBadRequest() throws Exception{
+        long id = 1;
+        when(taskService.startTask(id)).thenThrow(new IllegalArgumentException("you have a lot of tasks with IN_PROGRESS status"));
+        mockMvc.perform(post("/tasks/{id}/start",id))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Bad request"))
+                .andExpect(jsonPath("$.detailedMessage").value("you have a lot of tasks with IN_PROGRESS status"));
+    }
+
+    @Test
+    void completeTask_whenTaskExist_returnsTask() throws Exception{
+        long id = 1;
+        Task task = createTask(id);
+        when(taskService.completeTask(id)).thenReturn(task);
+        mockMvc.perform(post("/tasks/{id}/complete",id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id));
+    }
+
+    @Test
+    void completeTask_whenTaskNotExist_returnsNotFound() throws Exception{
+        long id = 1;
+        when(taskService.completeTask(id)).thenThrow(new EntityNotFoundException("Not found task by id = " + id));
+        mockMvc.perform(post("/tasks/{id}/complete",id))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Not found"))
+                .andExpect(jsonPath("$.detailedMessage").value("Not found task by id = " + id));
+    }
+
+    @Test
+    void completeTask_whenStatusIsNotInProgress_returnsConflict() throws Exception{
+        long id = 1;
+        when(taskService.completeTask(id)).thenThrow(new IllegalStateException("Task with id = " + id + " must be IN_PROGRESS to complete"));
+        mockMvc.perform(post("/tasks/{id}/complete",id))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Conflict"))
+                .andExpect(jsonPath("$.detailedMessage").value("Task with id = " + id + " must be IN_PROGRESS to complete"));
+    }
 
 
 
