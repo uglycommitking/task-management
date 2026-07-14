@@ -43,7 +43,7 @@ public class TaskService {
 
         var nowTime = LocalDateTime.now();
         if(!taskToCreate.deadlineDate().isAfter(nowTime)){
-            throw new IllegalArgumentException("Start date must be 1 day earlier than end date");
+            throw new IllegalArgumentException("Deadline must be in the future");
         }
 
         var taskToSave = mapper.toEntity(taskToCreate);

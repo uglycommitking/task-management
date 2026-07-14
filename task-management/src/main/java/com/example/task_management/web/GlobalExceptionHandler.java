@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
             IllegalStateException.class,
             MethodArgumentNotValidException.class
     })
-    ResponseEntity<ErrorResponseDto> handlerBadRequest(EntityNotFoundException e){
+    ResponseEntity<ErrorResponseDto> handlerBadRequest(Exception e){
 
         var responseDto = new ErrorResponseDto(
                 "Bad request",

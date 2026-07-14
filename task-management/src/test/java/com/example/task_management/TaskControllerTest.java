@@ -9,10 +9,12 @@ import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -75,6 +77,52 @@ public class TaskControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Not found"));
     }
+
+    @Test
+    void createTask_whenDataIsValid_returnsCreatedTask() throws Exception{
+        Task createdTask = createTask(1L);
+        when(taskService.createTask(any())).thenReturn(createdTask);
+
+        LocalDateTime deadline = LocalDateTime.now().plusDays(7).truncatedTo(ChronoUnit.SECONDS);
+
+        mockMvc.perform(post("/tasks")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                {
+                    "creatorId": 10,
+                    "assignedUserId": 20,
+                    "deadlineDate": "%s",
+                    "priority": "MEDIUM"
+                }
+                """.formatted(deadline)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1));
+
+    }
+
+    @Test
+    void createTask_whenStatusNotNull_returnsBadRequest() throws Exception{
+
+        when(taskService.createTask(any())).thenThrow(IllegalArgumentException.class);
+
+        LocalDateTime deadline = LocalDateTime.now().plusDays(7).truncatedTo(ChronoUnit.SECONDS);
+
+        mockMvc.perform(post("/tasks")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                {
+                    "creatorId": 10,
+                    "assignedUserId": 20,
+                    "status": "CREATED",
+                    "deadlineDate": "%s",
+                    "priority": "MEDIUM"
+                }
+                """.formatted(deadline)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Bad request"));
+    }
+
+
 
 
 
