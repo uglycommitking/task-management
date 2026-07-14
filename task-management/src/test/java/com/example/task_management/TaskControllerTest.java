@@ -205,7 +205,7 @@ public class TaskControllerTest {
     }
 
     @Test
-    void deleteTaskById_WhenTaskExist_returnsOk()throws Exception{
+    void deleteTaskById_WhenTaskExist_returnsOk() throws Exception{
         mockMvc.perform(delete("/tasks/1"))
                 .andExpect(status().isOk());
         verify(taskService).deleteTaskById(1L);
@@ -219,6 +219,35 @@ public class TaskControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Not found"))
                 .andExpect(jsonPath("$.detailedMessage").value("Not found task by id = 1"));
+    }
+
+    @Test
+    void reopenTask_whenTaskExist_returnsTask() throws Exception{
+        Task response = createTask(1L);
+        when(taskService.reopenTask(1L)).thenReturn(response);
+        mockMvc.perform(patch("/tasks/1/reopen"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    void reopenTask_whenTaskNotExist_returnsNotFound() throws Exception{
+        long id = 1;
+        when(taskService.reopenTask(id)).thenThrow(new EntityNotFoundException("Not found task by id = " + id));
+        mockMvc.perform(patch("/tasks/1/reopen"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Not found"))
+                .andExpect(jsonPath("$.detailedMessage").value("Not found task by id = " + id));
+    }
+
+    @Test
+    void reopenTask_whenIllegalState_returnsBadRequest() throws Exception{
+        long id = 1;
+        when(taskService.reopenTask(id)).thenThrow(new IllegalArgumentException("Task with id = " + id + " must be DONE to reopen"));
+        mockMvc.perform(patch("/tasks/1/reopen"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Bad request"))
+                .andExpect(jsonPath("$.detailedMessage").value("Task with id = " + id + " must be DONE to reopen"));
     }
 
 
