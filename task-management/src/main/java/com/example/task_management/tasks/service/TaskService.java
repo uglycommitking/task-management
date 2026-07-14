@@ -55,8 +55,7 @@ public class TaskService {
 
     public Task findTaskById(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
-        return mapper.toDomain(taskEntity);
+                .orElseThrow(() -> new EntityNotFoundException("Task not found by id = " + id));        return mapper.toDomain(taskEntity);
     }
 
     public List<Task> getAllTasks() {

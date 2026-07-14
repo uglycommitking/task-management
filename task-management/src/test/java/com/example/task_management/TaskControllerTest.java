@@ -5,6 +5,7 @@ import com.example.task_management.tasks.model.Priority;
 import com.example.task_management.tasks.model.Task;
 import com.example.task_management.tasks.model.TaskStatus;
 import com.example.task_management.tasks.service.TaskService;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -56,5 +57,33 @@ public class TaskControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
+
+    @Test
+    void getTaskById_whenTaskExist_returnsTask() throws Exception{
+        long id = 1;
+        Task task = createTask(id);
+        when(taskService.findTaskById(id)).thenReturn(task);
+        mockMvc.perform(get("/tasks/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id));
+    }
+
+    @Test
+    void getTaskById_whenTaskNotExist_returnNotFound() throws Exception{
+        when(taskService.findTaskById(1L)).thenThrow(EntityNotFoundException.class);
+        mockMvc.perform(get("/tasks/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Not found"));
+    }
+
+
+
+
+
+
+
+
+
+
 
 }
