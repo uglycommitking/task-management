@@ -122,6 +122,93 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.message").value("Bad request"));
     }
 
+    @Test
+    void updateTask_whenDataIsValid_returnsUpdatedTask() throws Exception{
+        long id = 1;
+        Task task = createTask(1L);
+        when(taskService.updateTask(eq(id),any())).thenReturn(task);
+
+        LocalDateTime deadlineTime = LocalDateTime.now().plusDays(7).truncatedTo(ChronoUnit.SECONDS);
+
+        mockMvc.perform(put("/tasks/{id}",id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "creatorId": 10,
+                            "assignedUserId": 20,
+                            "status": "IN_PROGRESS",
+                            "deadlineDate": "%s",
+                            "priority": "MEDIUM"
+                        }
+                        """.formatted(deadlineTime)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id));
+    }
+
+    @Test
+    void updateTask_whenTaskNotExists_returnsNotFound() throws Exception{
+        long id = 1;
+        when(taskService.updateTask(eq(id),any())).thenThrow(EntityNotFoundException.class);
+        LocalDateTime deadline = LocalDateTime.now().plusDays(7).truncatedTo(ChronoUnit.SECONDS);
+        mockMvc.perform(put("/tasks/{id}", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {
+                            "creatorId": 10,
+                            "assignedUserId": 20,
+                            "status": "IN_PROGRESS",
+                            "deadlineDate": "%s",
+                            "priority": "MEDIUM"
+                        }
+                        """.formatted(deadline)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Not found"));
+
+    }
+    @Test
+    void updateTask_whenTaskIsDone_returnsConflict () throws Exception{
+        long id = 1;
+        when(taskService.updateTask(eq(id),any())).thenThrow(IllegalStateException.class);
+        LocalDateTime deadline = LocalDateTime.now().plusDays(7).truncatedTo(ChronoUnit.SECONDS);
+        mockMvc.perform(put("/tasks/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                            "creatorId": 10,
+                            "assignedUserId": 20,
+                            "status": "IN_PROGRESS",
+                            "deadlineDate": "%s",
+                            "priority": "MEDIUM"
+                        }
+                        """.formatted(deadline)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Conflict"));
+    }
+    @Test
+    void updateTask_whenDeadlineInvalid_returnsBadRequest  () throws Exception{
+        long id = 1;
+        when(taskService.updateTask(eq(id),any())).thenThrow(IllegalArgumentException.class);
+        LocalDateTime deadline = LocalDateTime.now().plusDays(7).truncatedTo(ChronoUnit.SECONDS);
+        mockMvc.perform(put("/tasks/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                            "creatorId": 10,
+                            "assignedUserId": 20,
+                            "status": "IN_PROGRESS",
+                            "deadlineDate": "%s",
+                            "priority": "MEDIUM"
+                        }
+                        """.formatted(deadline)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Bad request"));
+    }
+
+
+
+
+
+
 
 
 
