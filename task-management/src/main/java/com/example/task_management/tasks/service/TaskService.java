@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-//try to add pull request
 @Service
 public class TaskService {
 
@@ -25,7 +24,7 @@ public class TaskService {
 
     public Task reopenTask(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Not found task by id = " + id));
 
         if(taskEntity.getStatus() != TaskStatus.DONE){
             throw new IllegalArgumentException("Task with id = " + id + " must be DONE to reopen");
@@ -44,7 +43,7 @@ public class TaskService {
 
         var nowTime = LocalDateTime.now();
         if(!taskToCreate.deadlineDate().isAfter(nowTime)){
-            throw new IllegalArgumentException("Start date must be 1 day earlier than end date");
+            throw new IllegalArgumentException("Deadline must be in the future");
         }
 
         var taskToSave = mapper.toEntity(taskToCreate);
@@ -56,8 +55,7 @@ public class TaskService {
 
     public Task findTaskById(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
-        return mapper.toDomain(taskEntity);
+                .orElseThrow(() -> new EntityNotFoundException("Task not found by id = " + id));        return mapper.toDomain(taskEntity);
     }
 
     public List<Task> getAllTasks() {
@@ -67,7 +65,7 @@ public class TaskService {
 
     public Task updateTask(Long id, Task taskToUpdate) {
         TaskEntity taskEntity = taskRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Not found task by id = " + id));
 
         if(taskEntity.getStatus() == TaskStatus.DONE){
             throw new IllegalStateException("Task with id = " + id + " is DONE and cannot be modified");
@@ -90,13 +88,13 @@ public class TaskService {
 
     public void deleteTaskById(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Not found task by id = " + id));
         taskRepository.delete(taskEntity);
     }
 
     public Task startTask(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Not found task by id = " + id));
 
         var count = taskRepository.countByAssignedUserIdAndStatus(taskEntity.getAssignedUserId(), TaskStatus.IN_PROGRESS);
 
@@ -112,7 +110,7 @@ public class TaskService {
 
     public Task completeTask(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Not found task by id = " + id));
 
         if (taskEntity.getStatus() != TaskStatus.IN_PROGRESS) {
             throw new IllegalStateException("Task with id = " + id + " must be IN_PROGRESS to complete");
