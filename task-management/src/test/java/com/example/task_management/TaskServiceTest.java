@@ -131,7 +131,7 @@ public class TaskServiceTest {
     void createTask_ReturnsMappedTask(){
         Task taskToCreate = new Task(1L, null,null,null,
                 null, LocalDateTime.now().plusDays(2),null,null);
-        Task taskToOutput = new Task(1L, null,null,TaskStatus.IN_PROGRESS,
+        Task taskToOutput = new Task(1L, null,null,TaskStatus.CREATED,
                 LocalDateTime.now(), LocalDateTime.now().plusDays(2),null,null);
         TaskEntity taskEntity = new TaskEntity();
         taskEntity.setId(1L);
@@ -145,7 +145,7 @@ public class TaskServiceTest {
 
         assertAll(
                 () -> assertEquals(taskToOutput, createdTask),
-                () -> assertEquals(TaskStatus.IN_PROGRESS, taskEntity.getStatus()),
+                () -> assertEquals(TaskStatus.CREATED, taskEntity.getStatus()),
                 () -> assertNotNull(taskEntity.getCreateDateTime())
         );
 
