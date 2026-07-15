@@ -47,7 +47,7 @@ public class TaskService {
         }
 
         var taskToSave = mapper.toEntity(taskToCreate);
-        taskToSave.setStatus(TaskStatus.IN_PROGRESS);
+        taskToSave.setStatus(TaskStatus.CREATED);
         taskToSave.setCreateDateTime(nowTime);
 
         return mapper.toDomain(taskRepository.save(taskToSave));
