@@ -1,5 +1,6 @@
 package com.example.task_management;
 
+import com.example.task_management.tasks.model.Task;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +17,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.ExecutionException;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -70,4 +71,44 @@ class TaskManagementApplicationTests {
 				.andExpect(jsonPath("$.status").value("CREATED"));
 	}
 
+	@Test
+	void updateDoneTask_returnsConflict() throws Exception{
+		LocalDateTime deadline = LocalDateTime.now().plusDays(7).truncatedTo(ChronoUnit.SECONDS);
+
+		String response = mockMvc.perform(post("/tasks")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{
+							"creatorId":1,
+							"assignedUserId":1,
+							"deadlineDate": "%s",
+							"priority": "LOW"
+						}
+						""".formatted(deadline)))
+				.andExpect(status().isCreated())
+				.andReturn().getResponse().getContentAsString();
+
+		long id = JsonPath.parse(response).read("$.id", Long.class);
+
+		mockMvc.perform(post("/tasks/" + id + "/start"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+
+		mockMvc.perform(post("/tasks/" + id + "/complete"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("DONE"));
+
+		mockMvc.perform(put("/tasks/" + id)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{
+							"creatorId":1,
+							"assignedUserId":1,
+							"status": "IN_PROGRESS",
+							"deadlineDate": "%s",
+							"priority": "LOW"
+						}
+						""".formatted(deadline)))
+				.andExpect(status().isConflict());
+	}
 }
