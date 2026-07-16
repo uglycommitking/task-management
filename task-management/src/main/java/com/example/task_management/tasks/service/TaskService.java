@@ -1,8 +1,9 @@
 package com.example.task_management.tasks.service;
 
 import com.example.task_management.tasks.mapper.TaskMapper;
+import com.example.task_management.tasks.model.TaskResponse;
+import com.example.task_management.tasks.model.TaskRequest;
 import com.example.task_management.tasks.repository.TaskEntity;
-import com.example.task_management.tasks.model.Task;
 import com.example.task_management.tasks.model.TaskStatus;
 import com.example.task_management.tasks.repository.TaskRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,48 +23,37 @@ public class TaskService {
         this.mapper = mapper;
     }
 
-    public Task reopenTask(Long id) {
+    public TaskResponse reopenTask(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Not found task by id = " + id));
 
         if(taskEntity.getStatus() != TaskStatus.DONE){
-            throw new IllegalArgumentException("Task with id = " + id + " must be DONE to reopen");
+            throw new IllegalStateException("Task with id = " + id + " must be DONE to reopen");
         }
 
         taskEntity.setStatus(TaskStatus.IN_PROGRESS);
-        taskEntity.setDoneDateTime(null);
 
         return mapper.toDomain(taskRepository.save(taskEntity));
     }
 
-    public Task createTask(Task taskToCreate) {
-        if(taskToCreate.status() != null){
-            throw new IllegalArgumentException("Status must be empty");
-        }
-
-        var nowTime = LocalDateTime.now();
-        if(!taskToCreate.deadlineDate().isAfter(nowTime)){
-            throw new IllegalArgumentException("Deadline must be in the future");
-        }
+    public TaskResponse createTask(TaskRequest taskToCreate) {
 
         var taskToSave = mapper.toEntity(taskToCreate);
-        taskToSave.setStatus(TaskStatus.CREATED);
-        taskToSave.setCreateDateTime(nowTime);
 
         return mapper.toDomain(taskRepository.save(taskToSave));
     }
 
-    public Task findTaskById(Long id) {
+    public TaskResponse findTaskById(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found by id = " + id));        return mapper.toDomain(taskEntity);
     }
 
-    public List<Task> getAllTasks() {
+    public List<TaskResponse> getAllTasks() {
         List<TaskEntity> allTasks = taskRepository.findAll();
         return allTasks.stream().map(mapper::toDomain).toList();
     }
 
-    public Task updateTask(Long id, Task taskToUpdate) {
+    public TaskResponse updateTask(Long id, TaskRequest taskToUpdate) {
         TaskEntity taskEntity = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Not found task by id = " + id));
 
@@ -92,14 +82,14 @@ public class TaskService {
         taskRepository.delete(taskEntity);
     }
 
-    public Task startTask(Long id) {
+    public TaskResponse startTask(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Not found task by id = " + id));
 
         var count = taskRepository.countByAssignedUserIdAndStatus(taskEntity.getAssignedUserId(), TaskStatus.IN_PROGRESS);
 
         if(count >= 5){
-            throw new IllegalArgumentException("you have a lot of tasks with IN_PROGRESS status");
+            throw new IllegalStateException("you have a lot of tasks with IN_PROGRESS status");
         }
 
         taskEntity.setStatus(TaskStatus.IN_PROGRESS);
@@ -108,7 +98,7 @@ public class TaskService {
         return mapper.toDomain(taskRepository.save(taskEntity));
     }
 
-    public Task completeTask(Long id) {
+    public TaskResponse completeTask(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Not found task by id = " + id));
 

@@ -1,13 +1,17 @@
 package com.example.task_management.tasks.mapper;
 
-import com.example.task_management.tasks.model.Task;
+import com.example.task_management.tasks.model.TaskResponse;
+import com.example.task_management.tasks.model.TaskStatus;
+import com.example.task_management.tasks.model.TaskRequest;
 import com.example.task_management.tasks.repository.TaskEntity;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 @Component
 public class TaskMapper {
-    public Task toDomain(TaskEntity entity){
-        return new Task(
+    public TaskResponse toDomain(TaskEntity entity){
+        return new TaskResponse(
                 entity.getId(),
                 entity.getCreatorId(),
                 entity.getAssignedUserId(),
@@ -19,16 +23,16 @@ public class TaskMapper {
         );
     }
 
-    public TaskEntity toEntity(Task task){
+    public TaskEntity toEntity(TaskRequest task){
         return new TaskEntity(
-                task.id(),
+                null,
                 task.creatorId(),
                 task.assignedUserId(),
-                task.status(),
-                task.createDateTime(),
+                TaskStatus.CREATED,
+                LocalDateTime.now(),
                 task.deadlineDate(),
                 task.priority(),
-                task.doneDateTime()
+                null
         );
     }
 }
