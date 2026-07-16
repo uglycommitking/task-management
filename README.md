@@ -46,7 +46,7 @@ PATCH /tasks/{id}/reopen — возврат задачи из статуса "в
 Запуск: mvn verify
 
 Покрытие: юнит-тесты сервиса (Mockito) и контроллера (@WebMvcTest + MockMvc),
-интеграционные тесты полного цикла с реальным PostgreSQL в Docker.
+интеграционные тесты полного цикла с PostgreSQL в Docker.
 
 Примечание: на Docker Engine 29+ интеграционные тесты могут падать с ошибкой
 "Could not find a valid Docker environment". Обход: добавить "min-api-version": "1.24"
