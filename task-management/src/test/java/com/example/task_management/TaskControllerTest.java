@@ -2,7 +2,7 @@ package com.example.task_management;
 
 import com.example.task_management.tasks.controller.TaskController;
 import com.example.task_management.tasks.model.Priority;
-import com.example.task_management.tasks.model.Task;
+import com.example.task_management.tasks.model.TaskResponse;
 import com.example.task_management.tasks.model.TaskStatus;
 import com.example.task_management.tasks.service.TaskService;
 import jakarta.persistence.EntityNotFoundException;
@@ -29,8 +29,8 @@ public class TaskControllerTest {
     @MockitoBean
     private TaskService taskService;
 
-    private Task createTask(Long id) {
-        return new Task(
+    private TaskResponse createTask(Long id) {
+        return new TaskResponse(
                 id,
                 10L,
                 20L,
@@ -45,8 +45,8 @@ public class TaskControllerTest {
 
     @Test
     void getAllTasks_whenTasksExist_returnsTasks() throws Exception{
-        Task task = createTask(1L);
-        when(taskService.getAllTasks()).thenReturn(List.of(task));
+        TaskResponse response = createTask(1L);
+        when(taskService.getAllTasks()).thenReturn(List.of(response));
         mockMvc.perform(get("/tasks"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1));
@@ -63,8 +63,8 @@ public class TaskControllerTest {
     @Test
     void getTaskById_whenTaskExist_returnsTask() throws Exception{
         long id = 1;
-        Task task = createTask(id);
-        when(taskService.findTaskById(id)).thenReturn(task);
+        TaskResponse response = createTask(id);
+        when(taskService.findTaskById(id)).thenReturn(response);
         mockMvc.perform(get("/tasks/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id));
@@ -80,7 +80,7 @@ public class TaskControllerTest {
 
     @Test
     void createTask_whenDataIsValid_returnsCreatedTask() throws Exception{
-        Task createdTask = createTask(1L);
+        TaskResponse createdTask = createTask(1L);
         when(taskService.createTask(any())).thenReturn(createdTask);
 
         LocalDateTime deadline = LocalDateTime.now().plusDays(7).truncatedTo(ChronoUnit.SECONDS);
@@ -105,7 +105,7 @@ public class TaskControllerTest {
 
         when(taskService.createTask(any())).thenThrow(IllegalArgumentException.class);
 
-        LocalDateTime deadline = LocalDateTime.now().plusDays(7).truncatedTo(ChronoUnit.SECONDS);
+        LocalDateTime deadline = LocalDateTime.now();
 
         mockMvc.perform(post("/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -113,7 +113,6 @@ public class TaskControllerTest {
                 {
                     "creatorId": 10,
                     "assignedUserId": 20,
-                    "status": "CREATED",
                     "deadlineDate": "%s",
                     "priority": "MEDIUM"
                 }
@@ -123,10 +122,41 @@ public class TaskControllerTest {
     }
 
     @Test
+    void createTask_whenDeadlineInPast_returnsBadRequest() throws Exception {
+        mockMvc.perform(post("/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+            {
+                "creatorId": 10,
+                "assignedUserId": 20,
+                "deadlineDate": "2020-01-01T10:00:00",
+                "priority": "MEDIUM"
+            }
+            """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createTask_whenStatusInBody_returnsBadRequest() throws Exception {
+        mockMvc.perform(post("/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+            {
+                "creatorId": 10,
+                "assignedUserId": 20,
+                "deadlineDate": "2020-01-01T10:00:00",
+                "priority": "MEDIUM",
+                "status": "CREATED"
+            }
+            """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void updateTask_whenDataIsValid_returnsUpdatedTask() throws Exception{
         long id = 1;
-        Task task = createTask(1L);
-        when(taskService.updateTask(eq(id),any())).thenReturn(task);
+        TaskResponse response = createTask(1L);
+        when(taskService.updateTask(eq(id),any())).thenReturn(response);
 
         LocalDateTime deadlineTime = LocalDateTime.now().plusDays(7).truncatedTo(ChronoUnit.SECONDS);
 
@@ -223,7 +253,7 @@ public class TaskControllerTest {
 
     @Test
     void reopenTask_whenTaskExist_returnsTask() throws Exception{
-        Task response = createTask(1L);
+        TaskResponse response = createTask(1L);
         when(taskService.reopenTask(1L)).thenReturn(response);
         mockMvc.perform(patch("/tasks/1/reopen"))
                 .andExpect(status().isOk())
@@ -253,8 +283,8 @@ public class TaskControllerTest {
     @Test
     void startTask_whenTaskExist_returnsTask() throws Exception{
         long id = 1;
-        Task task = createTask(id);
-        when(taskService.startTask(id)).thenReturn(task);
+        TaskResponse response = createTask(id);
+        when(taskService.startTask(id)).thenReturn(response);
         mockMvc.perform(post("/tasks/{id}/start",id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id))
@@ -284,8 +314,8 @@ public class TaskControllerTest {
     @Test
     void completeTask_whenTaskExist_returnsTask() throws Exception{
         long id = 1;
-        Task task = createTask(id);
-        when(taskService.completeTask(id)).thenReturn(task);
+        TaskResponse response = createTask(id);
+        when(taskService.completeTask(id)).thenReturn(response);
         mockMvc.perform(post("/tasks/{id}/complete",id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id));
