@@ -2,7 +2,8 @@ package com.example.task_management;
 
 import com.example.task_management.tasks.mapper.TaskMapper;
 import com.example.task_management.tasks.model.Priority;
-import com.example.task_management.tasks.model.Task;
+import com.example.task_management.tasks.model.TaskRequest;
+import com.example.task_management.tasks.model.TaskResponse;
 import com.example.task_management.tasks.model.TaskStatus;
 import com.example.task_management.tasks.repository.TaskEntity;
 import com.example.task_management.tasks.repository.TaskRepository;
@@ -32,12 +33,16 @@ public class TaskServiceTest {
     @InjectMocks
     private TaskService taskService;
 
+    private TaskRequest validRequest() {
+        return new TaskRequest(1L, 2L, LocalDateTime.now().plusDays(1), Priority.MEDIUM);
+    }
+
     @Test
     void getAllTasks_whenNoTasks_returnsEmptyList(){
 
         when(taskRepository.findAll()).thenReturn(List.of());
 
-        List<Task> allTasks = taskService.getAllTasks();
+        List<TaskResponse> allTasks = taskService.getAllTasks();
 
         assertEquals(0, allTasks.size());
 
@@ -50,14 +55,14 @@ public class TaskServiceTest {
         entity.setId(1L);
         entity.setStatus(TaskStatus.CREATED);
 
-        Task task = new Task(1L, null, null,TaskStatus.CREATED,null,
+        TaskResponse task = new TaskResponse(1L, null, null,TaskStatus.CREATED,null,
                 null,null,null);
 
 
         when(taskRepository.findAll()).thenReturn(List.of(entity));
         when(mapper.toDomain(entity)).thenReturn(task);
 
-        List<Task> allTasks = taskService.getAllTasks();
+        List<TaskResponse> allTasks = taskService.getAllTasks();
 
         assertAll(
                 () -> assertEquals(1, allTasks.size(), "Количество задач в списке не совпадает"),
@@ -75,7 +80,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void reopenTask_whenStatusNotDone_throwsIllegalArgument(){
+    void reopenTask_whenStatusNotDone_throwsIllegalState(){
         long id = 1;
         TaskEntity entity = new TaskEntity();
         entity.setId(id);
@@ -83,72 +88,49 @@ public class TaskServiceTest {
 
         when(taskRepository.findById(id)).thenReturn(Optional.of(entity));
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(IllegalStateException.class,
                 ()-> taskService.reopenTask(id));
     }
 
     @Test
-    void reopenTask_whenStatusDone_setsStatusToCreated(){
+    void reopenTask_whenStatusDone_setsStatusToInProgress(){
 
         long id = 1;
         TaskEntity taskEntity = new TaskEntity();
         taskEntity.setId(id);
         taskEntity.setStatus(TaskStatus.DONE);
 
-        Task task = new Task(id,null,null,TaskStatus.DONE,
+        TaskResponse task = new TaskResponse(id,null,null,TaskStatus.DONE,
                 null,null,null,null);
 
         when(taskRepository.findById(id)).thenReturn(Optional.of(taskEntity));
         when(mapper.toDomain(taskEntity)).thenReturn(task);
         when(taskRepository.save(taskEntity)).thenReturn(taskEntity);
 
-        Task reopenedTask = taskService.reopenTask(id);
+        TaskResponse reopenedTask = taskService.reopenTask(id);
 
         assertAll(
                 ()->assertEquals(task, reopenedTask),
                 ()->assertEquals(TaskStatus.IN_PROGRESS, taskEntity.getStatus())
         );
-
     }
 
     @Test
-    void createTask_whenStatusNotEmpty_throwsIllegalArgument(){
-        Task taskToCreate = new Task(1L, null,null,TaskStatus.CREATED,
-                null,null,null,null);
+    void createTask_savesEntityAndReturnsMappedTask() {
+        TaskRequest request = validRequest();
 
-        assertThrows(IllegalArgumentException.class, () -> taskService.createTask(taskToCreate));
-    }
-
-    @Test
-    void createTask_whenDeadLineIsAfter_throwsIllegalArgument(){
-        Task taskToCreate = new Task(1L, null,null,null,
-                null, LocalDateTime.now(),null,null);
-
-        assertThrows(IllegalArgumentException.class, () -> taskService.createTask(taskToCreate));
-    }
-
-    @Test
-    void createTask_ReturnsMappedTask(){
-        Task taskToCreate = new Task(1L, null,null,null,
-                null, LocalDateTime.now().plusDays(2),null,null);
-        Task taskToOutput = new Task(1L, null,null,TaskStatus.CREATED,
-                LocalDateTime.now(), LocalDateTime.now().plusDays(2),null,null);
         TaskEntity taskEntity = new TaskEntity();
-        taskEntity.setId(1L);
-        taskEntity.setDeadlineDate(LocalDateTime.now().plusDays(2));
+        TaskResponse expectedResponse = new TaskResponse(1L, 1L, 1L, TaskStatus.CREATED,
+                LocalDateTime.now(), request.deadlineDate(), request.priority(), null);
 
-        when(mapper.toEntity(taskToCreate)).thenReturn(taskEntity);
-        when(mapper.toDomain(taskEntity)).thenReturn(taskToOutput);
+        when(mapper.toEntity(request)).thenReturn(taskEntity);
         when(taskRepository.save(taskEntity)).thenReturn(taskEntity);
+        when(mapper.toDomain(taskEntity)).thenReturn(expectedResponse);
 
-        Task createdTask = taskService.createTask(taskToCreate);
+        TaskResponse result = taskService.createTask(request);
 
-        assertAll(
-                () -> assertEquals(taskToOutput, createdTask),
-                () -> assertEquals(TaskStatus.CREATED, taskEntity.getStatus()),
-                () -> assertNotNull(taskEntity.getCreateDateTime())
-        );
-
+        assertEquals(expectedResponse, result);
+        verify(taskRepository).save(taskEntity);
     }
 
     @Test
@@ -166,7 +148,7 @@ public class TaskServiceTest {
         entity.setId(id);
         entity.setStatus(TaskStatus.IN_PROGRESS);
 
-        Task task = new Task(id, null,null,TaskStatus.IN_PROGRESS,
+        TaskResponse task = new TaskResponse(id, null,null,TaskStatus.IN_PROGRESS,
                 null,null,null,null);
 
         when(taskRepository.findById(id)).thenReturn(Optional.of(entity));
@@ -178,12 +160,9 @@ public class TaskServiceTest {
     @Test
     void updateTask_whenTaskNotFound_throwsEntityNotFound(){
         long id = 1;
-        Task taskToUpdate = new Task(null, 2L,null,null,
-                null,null,null,null);
-
         when(taskRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> taskService.updateTask(id,taskToUpdate));
+        assertThrows(EntityNotFoundException.class, () -> taskService.updateTask(id,validRequest()));
 
     }
 
@@ -191,53 +170,55 @@ public class TaskServiceTest {
     void updateTask_whenStatusDone_throwsIllegalState(){
         long id = 1;
 
-        Task taskToUpdate = new Task(null, 2L,null,null,
-                null,null,null,null);
-
         TaskEntity entity = new TaskEntity(1L, 1L, 2L,TaskStatus.DONE,
                 null,null,null,null);
+
         when(taskRepository.findById(id)).thenReturn(Optional.of(entity));
 
-        assertThrows(IllegalStateException.class, () -> taskService.updateTask(id, taskToUpdate));
+        assertThrows(IllegalStateException.class, () -> taskService.updateTask(id, validRequest()));
     }
 
     @Test
     void updateTask_whenDeadlineNotAfterCreateDate_throwsIllegalArgument(){
 
+        TaskRequest request = validRequest();
+
         LocalDateTime createDate = LocalDateTime.now();
-        Task taskToUpdate = new Task(null, 2L,null,TaskStatus.IN_PROGRESS,
-                null,createDate.minusDays(1),null,null);
+
         TaskEntity taskEntity = new TaskEntity(null, 2L,null,TaskStatus.IN_PROGRESS,
-                createDate,null,null,null);
+                createDate.plusDays(2),createDate.plusDays(1),null,null);
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(taskEntity));
 
-        assertThrows(IllegalArgumentException.class, () -> taskService.updateTask(1L, taskToUpdate));
+        assertThrows(IllegalArgumentException.class, () -> taskService.updateTask(1L, request));
     }
 
     @Test
-    void updateTask_whenValidRequest_updatesFieldsAndReturnsTask(){
-        long id = 1;
+    void updateTask_whenValidRequest_updatesFieldsAndReturnsTask() {
+        long id = 1L;
         LocalDateTime createDate = LocalDateTime.now();
 
-        Task taskToUpdate = new Task(null, 2L, 3L, TaskStatus.IN_PROGRESS,
-                null, createDate.plusDays(2), Priority.HIGH, null);
+        TaskRequest request = validRequest();
 
-        TaskEntity taskEntity = new TaskEntity(1L, 5L, 7L, TaskStatus.IN_PROGRESS,
+        TaskEntity taskEntity = new TaskEntity(1L, 5L, 7L, TaskStatus.CREATED,
                 createDate, createDate.plusDays(1), Priority.LOW, null);
+
+        TaskResponse expectedResponse = new TaskResponse(1L,
+                request.creatorId(), request.assignedUserId(), TaskStatus.CREATED,
+                createDate, request.deadlineDate(), request.priority(), null);
 
         when(taskRepository.findById(id)).thenReturn(Optional.of(taskEntity));
         when(taskRepository.save(taskEntity)).thenReturn(taskEntity);
-        when(mapper.toDomain(taskEntity)).thenReturn(taskToUpdate);
+        when(mapper.toDomain(taskEntity)).thenReturn(expectedResponse);
 
-        Task result = taskService.updateTask(id, taskToUpdate);
+        TaskResponse result = taskService.updateTask(id, request);
 
         assertAll(
-                () -> assertEquals(taskToUpdate, result),
-                () -> assertEquals(taskToUpdate.creatorId(), taskEntity.getCreatorId()),
-                () -> assertEquals(taskToUpdate.assignedUserId(), taskEntity.getAssignedUserId()),
-                () -> assertEquals(taskToUpdate.deadlineDate(), taskEntity.getDeadlineDate()),
-                () -> assertEquals(taskToUpdate.priority(), taskEntity.getPriority())
+                () -> assertEquals(expectedResponse, result),
+                () -> assertEquals(request.creatorId(), taskEntity.getCreatorId()),
+                () -> assertEquals(request.assignedUserId(), taskEntity.getAssignedUserId()),
+                () -> assertEquals(request.deadlineDate(), taskEntity.getDeadlineDate()),
+                () -> assertEquals(request.priority(), taskEntity.getPriority())
         );
     }
 
@@ -266,7 +247,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void startTask_whenCountOfTasksMoreThanFive_throwsIllegalArgument(){
+    void startTask_whenCountOfTasksMoreThanFive_throwsIllegalState(){
         long id = 1;
         TaskEntity taskEntity = new TaskEntity();
         taskEntity.setId(id);
@@ -276,7 +257,7 @@ public class TaskServiceTest {
         when(taskRepository.countByAssignedUserIdAndStatus(
                 taskEntity.getAssignedUserId(), TaskStatus.IN_PROGRESS)).thenReturn(5);
 
-        assertThrows(IllegalArgumentException.class, ()->taskService.startTask(id));
+        assertThrows(IllegalStateException.class, ()->taskService.startTask(id));
     }
 
     @Test
@@ -287,7 +268,7 @@ public class TaskServiceTest {
         taskEntity.setAssignedUserId(id);
         taskEntity.setStatus(TaskStatus.CREATED);
 
-        Task taskEntityDomain = new Task(id,null,id,TaskStatus.IN_PROGRESS,
+        TaskResponse taskEntityDomain = new TaskResponse(id,null,id,TaskStatus.IN_PROGRESS,
                 null,null,null,null);
 
         when(taskRepository.findById(id)).thenReturn(Optional.of(taskEntity));
@@ -296,7 +277,7 @@ public class TaskServiceTest {
         when(mapper.toDomain(taskEntity)).thenReturn(taskEntityDomain);
         when(taskRepository.save(taskEntity)).thenReturn(taskEntity);
 
-        Task result = taskService.startTask(id);
+        TaskResponse result = taskService.startTask(id);
 
         assertAll(
                 () -> assertEquals(taskEntityDomain, result),
@@ -311,7 +292,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void completeTask_whenStatusInProgress_throwsIllegalState(){
+    void completeTask_whenStatusNotInProgress_throwsIllegalState(){
         long id = 1;
         TaskEntity taskEntity = new TaskEntity();
         taskEntity.setId(id);
@@ -328,14 +309,14 @@ public class TaskServiceTest {
         taskEntity.setId(id);
         taskEntity.setStatus(TaskStatus.IN_PROGRESS);
 
-        Task taskEntityDomain = new Task(id,null,null,TaskStatus.DONE,
+        TaskResponse taskEntityDomain = new TaskResponse(id,null,null,TaskStatus.DONE,
                 null,null,null,null);
 
         when(taskRepository.findById(id)).thenReturn(Optional.of(taskEntity));
         when(taskRepository.save(taskEntity)).thenReturn(taskEntity);
         when(mapper.toDomain(taskEntity)).thenReturn(taskEntityDomain);
 
-        Task result = taskService.completeTask(id);
+        TaskResponse result = taskService.completeTask(id);
 
         assertAll(
                 ()->assertEquals(taskEntityDomain,result),
