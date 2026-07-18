@@ -12,7 +12,7 @@
 
 	<groupId>com.example</groupId>
 	<artifactId>task-management</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<name>task-management</name>
 	<description>Task management REST API (Spring Boot, PostgreSQL)</description>
 
