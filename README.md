@@ -29,17 +29,27 @@ PATCH /tasks/{id}/reopen — возврат задачи из статуса "в
 
 Требования: Java 21, Maven, Docker.
 
-1. Поднять базу данных (из терминала):
+### Вариант 1 - через Docker Compose
 
-   docker run -d --name task-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres -p 5432:5432 postgres:16
+    mvn clean package
+    docker compose up --build
 
-2. Запустить приложение (из корня проекта):
+Поднимает приложение и PostgreSQL одной командой.
+
+### Вариант 2 - локальная разработка
+
+1. Поднять только базу данных:
+
+   docker compose up postgres-db
+
+2. Запустить приложение из IDE или из корня проекта:
 
    mvn spring-boot:run
 
-3. Приложение доступно на http://localhost:8080,
-   Swagger UI — http://localhost:8080/swagger
-   (через него можно протестировать все методы).
+Без переменных окружения приложение подключается к localhost:5432.
+
+Приложение доступно на http://localhost:8080,
+Swagger UI — http://localhost:8080/swagger
 
 ## Тесты
 
