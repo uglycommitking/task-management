@@ -31,8 +31,8 @@ PATCH /tasks/{id}/reopen — возврат задачи из статуса "в
 
 ### Вариант 1 - через Docker Compose
 
-    mvn clean package
-    docker compose up --build
+        mvn clean package
+        docker compose up --build
 
 Поднимает приложение и PostgreSQL одной командой.
 
@@ -40,12 +40,13 @@ PATCH /tasks/{id}/reopen — возврат задачи из статуса "в
 
 1. Поднять только базу данных:
 
+```
    docker compose up postgres-db
-
+```
 2. Запустить приложение из IDE или из корня проекта:
-
+```
    mvn spring-boot:run
-
+```
 Без переменных окружения приложение подключается к localhost:5432.
 
 Приложение доступно на http://localhost:8080,
