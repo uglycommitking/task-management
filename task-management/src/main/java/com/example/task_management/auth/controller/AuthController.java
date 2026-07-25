@@ -1,6 +1,7 @@
 package com.example.task_management.auth.controller;
 
-import com.example.task_management.auth.model.Registration;
+import com.example.task_management.auth.model.AuthRequest;
+import com.example.task_management.auth.model.AuthResponse;
 import com.example.task_management.auth.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -19,9 +20,9 @@ public class AuthController {
     }
 
     @PostMapping("/registration")
-    public ResponseEntity<Void> registerUser(@RequestBody @Valid Registration request){
-        authService.createUser(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<AuthResponse> registerUser(@RequestBody @Valid AuthRequest request){
+        AuthResponse response = authService.createUser(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
 }

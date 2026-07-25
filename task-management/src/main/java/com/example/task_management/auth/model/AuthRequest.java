@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import org.hibernate.validator.constraints.Length;
 
 @Schema(description = "Регистрация пользователя")
-public record Registration(
+public record AuthRequest(
         @Schema(description = "Логин",example = "Andrew")
         @NotBlank
         @Pattern(regexp = "^[a-zA-Z]*$", message = "Допустимы только английские буквы")
