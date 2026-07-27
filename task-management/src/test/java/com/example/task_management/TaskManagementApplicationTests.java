@@ -1,17 +1,22 @@
 package com.example.task_management;
 
+import com.example.task_management.auth.repository.AuthEntity;
+import com.example.task_management.auth.repository.AuthRepository;
 import com.jayway.jsonpath.JsonPath;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -27,6 +32,23 @@ class TaskManagementApplicationTests {
 
 	@Autowired
 	private MockMvc mockMvc;
+
+	@Autowired
+	private AuthRepository authRepository;
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+
+	@BeforeEach
+	void setUpUser(){
+		if(!authRepository.existsByUsername("username")){
+			AuthEntity authEntity = new AuthEntity();
+			authEntity.setUsername("username");
+			authEntity.setPassword(passwordEncoder.encode("password"));
+			authRepository.save(authEntity);
+		}
+	}
 
 	@Container
 	//@ServiceConnection
@@ -47,6 +69,7 @@ class TaskManagementApplicationTests {
 	void createAndGetTask_fullCycle() throws Exception {
 		LocalDateTime deadline = LocalDateTime.now().plusDays(7).truncatedTo(ChronoUnit.SECONDS);
 		String response = mockMvc.perform(post("/tasks")
+						.with(httpBasic("username", "password"))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{
@@ -62,7 +85,8 @@ class TaskManagementApplicationTests {
 
 		long id = JsonPath.parse(response).read("$.id", Long.class);
 
-		mockMvc.perform(get("/tasks/" + id))
+		mockMvc.perform(get("/tasks/" + id)
+				.with(httpBasic("username", "password")))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.priority").value("LOW"))
 				.andExpect(jsonPath("$.status").value("CREATED"));
@@ -74,6 +98,7 @@ class TaskManagementApplicationTests {
 
 		String response = mockMvc.perform(post("/tasks")
 				.contentType(MediaType.APPLICATION_JSON)
+						.with(httpBasic("username", "password"))
 				.content("""
 						{
 							"creatorId":1,
@@ -87,16 +112,19 @@ class TaskManagementApplicationTests {
 
 		long id = JsonPath.parse(response).read("$.id", Long.class);
 
-		mockMvc.perform(post("/tasks/" + id + "/start"))
+		mockMvc.perform(post("/tasks/" + id + "/start")
+				.with(httpBasic("username", "password")))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("IN_PROGRESS"));
 
-		mockMvc.perform(post("/tasks/" + id + "/complete"))
+		mockMvc.perform(post("/tasks/" + id + "/complete")
+				.with(httpBasic("username", "password")))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("DONE"));
 
 		mockMvc.perform(put("/tasks/" + id)
 				.contentType(MediaType.APPLICATION_JSON)
+						.with(httpBasic("username", "password"))
 				.content("""
 						{
 							"creatorId":1,
