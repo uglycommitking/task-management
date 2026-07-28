@@ -20,6 +20,7 @@ public class SecurityConfig {
                         .requestMatchers("/","/index.html").permitAll()
                         .requestMatchers("/auth/registration").permitAll()
                         .requestMatchers("/swagger", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/actuator/prometheus").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults())
