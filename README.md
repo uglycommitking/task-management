@@ -6,7 +6,7 @@ Pet-проект: REST API для управления задачами - соз
 ## Стек
 
 Java 21, Spring Boot 4, Spring Data JPA (Hibernate), PostgreSQL, Maven,
-JUnit 5 / Mockito / Testcontainers, Swagger, Docker.
+JUnit 5 / Mockito / Testcontainers / REST assured, Swagger, Docker.
 
 ## Функциональность
 
@@ -20,10 +20,23 @@ POST /tasks/{id}/start — перевод задачи в статус "выпо
 POST /tasks/{id}/complete — перевод задачи в статус "выполнено"  
 PATCH /tasks/{id}/reopen — возврат задачи из статуса "выполнено" в "выполняется"  
 
+<img width="1451" height="623" alt="изображение" src="https://github.com/user-attachments/assets/c7ee4617-0545-4acc-b419-e7cce12bb71f" />
+
 Правила:  
 1) входные данные валидируются  
 2) запрос несуществующей задачи возвращает 404
 3) задача в статусе "выполнено" не может быть изменена - попытка вернёт 409.
+
+## Аутентификация
+Доступ к эндпоинтам задач защищён (Spring Security). Для работы с API нужно зарегистрироваться. (например, через интерфейс Swagger)
+
+```
+POST /auth/registration  
+{  
+  "username": "user",  
+  "password": "password"  
+}  
+```
 
 ## Запуск
 
