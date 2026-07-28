@@ -8,6 +8,12 @@ Pet-проект: REST API для управления задачами - соз
 Java 21, Spring Boot 4, Spring Data JPA (Hibernate), PostgreSQL, Maven,
 JUnit 5 / Mockito / Testcontainers / REST assured, Swagger, Docker.
 
+## CI
+Настроен GitHub Actions: на каждый PR автоматически собирается проект
+и прогоняются тесты (unit + интеграционные), а также статический анализ кода
+через Qodana.
+Конфиг: `.github/workflows/check.yml`
+
 ## Функциональность
 
 Эндпоинты:
